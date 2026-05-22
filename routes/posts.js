@@ -34,4 +34,43 @@ router.get("/:pincode", async (req, res) => {
   }
 });
 
+// Update a post
+router.put("/:id", async (req, res) => {
+  try {
+    const { content, userId } = req.body;
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    if (post.userId && post.userId.toString() !== userId) {
+      return res.status(403).json({ error: "Unauthorized: You do not own this post" });
+    }
+    post.content = content || post.content;
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    console.error("Update post error:", err);
+    res.status(500).json({ error: err.message || "Failed to update post" });
+  }
+});
+
+// Delete a post
+router.delete("/:id", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    if (post.userId && post.userId.toString() !== userId) {
+      return res.status(403).json({ error: "Unauthorized: You do not own this post" });
+    }
+    await Post.findByIdAndDelete(req.params.id);
+    res.json({ message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("Delete post error:", err);
+    res.status(500).json({ error: err.message || "Failed to delete post" });
+  }
+});
+
 module.exports = router;
